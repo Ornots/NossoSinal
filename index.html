@@ -1179,11 +1179,12 @@
       border-radius: var(--radius-lg);
       overflow: hidden;
       cursor: pointer;
-      border: 1px solid rgba(0,0,0,0.05);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      border: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* slightly soften shadow */
       transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex; flex-direction: column;
       position: relative;
+      transform: translateZ(0); /* Fix white line bleed */
     }
     .encyclo-card::after {
       display: none;
@@ -1191,7 +1192,6 @@
     .encyclo-card:hover {
       transform: translateY(-12px) scale(1.02);
       box-shadow: 0 20px 40px -10px var(--glow-color, rgba(0,0,0,0.15));
-      border-color: transparent;
     }
     .card-img-placeholder {
       height: 180px;
@@ -1279,15 +1279,16 @@
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
-      padding: 1rem 0;
+      padding: 0.6rem 1.2rem;
+      margin-left: -1.2rem;
       margin-bottom: 1.5rem;
       transition: all 0.3s ease;
       font-family: 'Inter', sans-serif;
       align-self: flex-start;
+      border-radius: 9999px;
     }
     .btn-back:hover {
       color: var(--primary);
-      transform: translateX(-5px);
     }
 
     /* Header Temático Dinâmico */
@@ -1573,7 +1574,7 @@
       .article-hero-img { height: 180px !important; margin-bottom: 1rem !important; }
       .article-body { font-size: 1.05rem; line-height: 1.6; }
       .article-body h3 { font-size: 1.4rem !important; margin-top: 1.5rem !important; }
-      .btn-back { padding: 0.8rem 0 !important; font-size: 1rem !important; }
+      .btn-back { padding: 0.6rem 1rem !important; margin-left: -1rem !important; font-size: 1rem !important; }
     }
     /* Transições Apple-like (Premium) */
     .premium-transition {
@@ -2118,14 +2119,31 @@
     <div id="tela-triagem-camera" class="screen">
       <div style="text-align: center; margin-bottom: 2rem;">
         <h2 style="font-size: 2.2rem;">Aponte para o Sinal</h2>
-        <p>Mantenha o celular/totem a cerca de 10cm da pele para melhor nitidez.</p>
+        <p>Mantenha a cerca de 10cm da pele. Toque na imagem para tirar a foto.</p>
       </div>
       
-      <div style="position: relative; width: 100%; max-width: 800px; margin: 0 auto; height: 500px; border-radius: 32px; overflow: hidden; background: #000; box-shadow: var(--shadow-lg);">
+      <div id="camera-frame-container" onclick="takeSnapshot()" style="cursor: pointer; position: relative; width: 100%; max-width: 800px; margin: 0 auto; height: 500px; border-radius: 32px; overflow: hidden; background: #000; box-shadow: var(--shadow-lg);">
         <video id="triage-webcam" autoplay playsinline muted style="width:100%; height:100%; object-fit: cover;"></video>
-        <div class="cam-overlay">
+        <canvas id="triage-snapshot-canvas" style="display: none; width:100%; height:100%; object-fit: cover;"></canvas>
+        <div id="camera-shutter-top" style="position: absolute; top: 0; left: 0; right: 0; height: 50%; background: #111; transform: translateY(-100%); transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5; pointer-events: none; border-bottom: 2px solid #222;"></div>
+        <div id="camera-shutter-bottom" style="position: absolute; bottom: 0; left: 0; right: 0; height: 50%; background: #111; transform: translateY(100%); transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1); z-index: 5; pointer-events: none; border-top: 2px solid #222;"></div>
+        <div id="camera-flash" style="position: absolute; inset: 0; background: rgba(255,255,255,0.85); opacity: 0; pointer-events: none; transition: opacity 0.2s ease-out; z-index: 6;"></div>
+        <div class="cam-overlay" id="triage-cam-overlay">
           <div id="triage-cam-guides" class="cam-guides" style="width: 250px; height: 250px; border: 4px solid rgba(255,255,255,0.4); border-radius: 40px; transition: border-color 0.3s ease;"></div>
           <div class="scan-line" id="triage-scan-line" style="display: block;"></div>
+        </div>
+        
+        <div id="camera-controls-confirm" style="display: none; position: absolute; bottom: 24px; left: 0; right: 0; justify-content: center; gap: 1rem; z-index: 10;">
+          <button class="btn-secondary" onclick="retakeSnapshot(event)" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); color: var(--text-dark); border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.15); font-weight: 600; padding: 0.8rem 1.5rem; transition: transform 0.2s; border-radius: 9999px;">
+            Tirar Outra
+          </button>
+          <button class="btn-primary" onclick="concluirCaptura(event)" style="background: rgba(5, 150, 105, 0.8); backdrop-filter: blur(10px); box-shadow: 0 8px 20px rgba(0,0,0,0.25); padding: 0.8rem 1.5rem; transition: transform 0.2s; border-radius: 9999px; color: white;">
+            Usar Esta Foto <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px; margin-left: 5px;"><path d="M5 12l5 5L20 7"/></svg>
+          </button>
+        </div>
+        
+        <div id="camera-controls-default" style="position: absolute; bottom: 24px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; z-index: 10;">
+          <p style="background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); color: white; padding: 0.8rem 1.5rem; border-radius: 9999px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); margin: 0;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Toque na imagem para capturar</p>
         </div>
       </div>
       
@@ -2138,13 +2156,6 @@
         <p id="sina-ai-message" style="margin: 0; text-align: center; color: var(--text-dark); line-height: 1.5; font-weight: 500; font-size: 1.05rem;">
           Iniciando modelo de Inteligência Artificial...
         </p>
-      </div>
-      
-      <div style="display: flex; justify-content: center; margin-top: 2rem;">
-        <button class="btn-primary" onclick="concluirCaptura()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8.5 11.5L11 14l4.5-4.5"/></svg>
-          Avançar para Questionário
-        </button>
       </div>
     </div>
 
@@ -3374,7 +3385,10 @@
 
             <!-- Passo 2: Tempo -->
             <div class="question-step" id="step-2">
-              <span class="sina-tag">Pergunta 2 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(1)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 2 de 7</span>
+              </div>
               <h3>Há quanto tempo você notou este sinal?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('tempo', 'Menos de 6 meses'); nextQuestion(3)">Menos de 6 meses (Surgiu recentemente)</button>
@@ -3386,7 +3400,10 @@
 
             <!-- Passo 3: Sintomas -->
             <div class="question-step" id="step-3">
-              <span class="sina-tag">Pergunta 3 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(2)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 3 de 7</span>
+              </div>
               <h3>Você notou algum destes sintomas recentemente?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('sintoma', 'Coceira/Vermelhidão'); nextQuestion(4)">Coceira ou Vermelhidão</button>
@@ -3398,7 +3415,10 @@
 
             <!-- Passo 4: Histórico -->
             <div class="question-step" id="step-4">
-              <span class="sina-tag">Pergunta 4 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(3)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 4 de 7</span>
+              </div>
               <h3>Alguém na sua família já teve câncer de pele?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('historico', 'Sim, parente de primeiro grau'); nextQuestion(5)">Sim, pai, mãe ou irmãos</button>
@@ -3410,7 +3430,10 @@
 
             <!-- Passo 5: Sol -->
             <div class="question-step" id="step-5">
-              <span class="sina-tag">Pergunta 5 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(4)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 5 de 7</span>
+              </div>
               <h3>Como é sua exposição ao sol ultimamente?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('exposicao', 'Alta sem proteção'); nextQuestion(6)">Alta exposição, raramente uso protetor solar</button>
@@ -3422,7 +3445,10 @@
 
             <!-- Passo 6: Oleosidade -->
             <div class="question-step" id="step-6">
-              <span class="sina-tag">Pergunta 6 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(5)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 6 de 7</span>
+              </div>
               <h3>Como você descreveria a oleosidade da sua pele?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('oleosidade', 'Oleosa/Acneica'); nextQuestion(7)">Mista/Oleosa (Brilha facilmente, tendência a acne)</button>
@@ -3434,7 +3460,10 @@
 
             <!-- Passo 7: Sensibilidade -->
             <div class="question-step" id="step-7">
-              <span class="sina-tag">Pergunta 7 de 7</span>
+              <div style="display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 1rem;">
+                <button onclick="prevQuestion(6)" style="position: absolute; left: 0; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dark); display: flex; align-items: center; padding: 0.5rem;" aria-label="Voltar"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg></button>
+                <span class="sina-tag" style="margin: 0;">Pergunta 7 de 7</span>
+              </div>
               <h3>Como sua pele reage a novos produtos ou contato prolongado com o sol?</h3>
               <div class="question-options">
                 <button class="option-btn" onclick="saveAnswer('sensibilidade', 'Sensível'); processarTudo()">Fica vermelha e irritada facilmente, é muito sensível</button>
@@ -3572,7 +3601,7 @@
         } else if (bestClass.className === "Lesão Suspeita" && bestClass.probability > 0.6) {
             title.textContent = 'Atenção Necessária';
             title.style.color = '#B45309'; // Amber/Orange warning
-            msg.textContent = 'Notei <strong>padrões irregulares</strong> nesta área (Regra ABCDE). Lembre-se, sou apenas uma triagem. Recomendamos agendar uma <strong>avaliação no SUS</strong> ou com seu dermatologista.';
+            msg.innerHTML = 'Notei <strong>padrões irregulares</strong> nesta área (Regra ABCDE). Lembre-se, sou apenas uma triagem. Recomendamos agendar uma <strong>avaliação no SUS</strong> ou com seu dermatologista.';
             box.style.background = 'rgba(245, 158, 11, 0.1)';
             box.style.border = '1px solid rgba(245, 158, 11, 0.3)';
             if (guides) guides.style.borderColor = '#F59E0B'; // Amber
@@ -3587,7 +3616,113 @@
         }
     }
 
-    function concluirCaptura() {
+    function takeSnapshot(e) {
+      if (e) e.stopPropagation();
+      const video = document.getElementById('triage-webcam');
+      const canvas = document.getElementById('triage-snapshot-canvas');
+      const flash = document.getElementById('camera-flash');
+      const shutterTop = document.getElementById('camera-shutter-top');
+      const shutterBottom = document.getElementById('camera-shutter-bottom');
+      const controlsDefault = document.getElementById('camera-controls-default');
+      const controlsConfirm = document.getElementById('camera-controls-confirm');
+      const overlay = document.getElementById('triage-cam-overlay');
+
+      if (!video || !canvas) return;
+
+      if (shutterTop && shutterBottom && flash) {
+        // Close shutter
+        shutterTop.style.transform = 'translateY(0)';
+        shutterBottom.style.transform = 'translateY(0)';
+        
+        setTimeout(() => {
+          // Shutter opens with flash
+          flash.style.transition = 'opacity 0.05s ease-out';
+          flash.style.opacity = '1';
+          
+          shutterTop.style.transform = 'translateY(-100%)';
+          shutterBottom.style.transform = 'translateY(100%)';
+          
+          const context = canvas.getContext('2d');
+          canvas.width = video.videoWidth || 800;
+          canvas.height = video.videoHeight || 500;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+          video.style.display = 'none';
+          canvas.style.display = 'block';
+          if (overlay) overlay.style.display = 'none';
+          
+          if (controlsDefault) controlsDefault.style.display = 'none';
+          if (controlsConfirm) controlsConfirm.style.display = 'flex';
+
+          cameraLoopActive = false;
+
+          setTimeout(() => {
+            flash.style.transition = 'opacity 0.3s ease-in';
+            flash.style.opacity = '0';
+          }, 50);
+        }, 150);
+        return;
+      }
+
+      // Fallback if elements not found
+      const context = canvas.getContext('2d');
+      canvas.width = video.videoWidth || 800;
+      canvas.height = video.videoHeight || 500;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      if (overlay) overlay.style.display = 'none';
+      
+      if (controlsDefault) controlsDefault.style.display = 'none';
+      if (controlsConfirm) controlsConfirm.style.display = 'flex';
+
+      cameraLoopActive = false;
+    }
+
+    function retakeSnapshot(e) {
+      if (e) e.stopPropagation();
+      const video = document.getElementById('triage-webcam');
+      const canvas = document.getElementById('triage-snapshot-canvas');
+      const controlsDefault = document.getElementById('camera-controls-default');
+      const controlsConfirm = document.getElementById('camera-controls-confirm');
+      const overlay = document.getElementById('triage-cam-overlay');
+      const shutterTop = document.getElementById('camera-shutter-top');
+      const shutterBottom = document.getElementById('camera-shutter-bottom');
+      
+      if (shutterTop && shutterBottom) {
+          shutterTop.style.transform = 'translateY(0)';
+          shutterBottom.style.transform = 'translateY(0)';
+          setTimeout(() => {
+              if (canvas) canvas.style.display = 'none';
+              if (video) video.style.display = 'block';
+              if (overlay) overlay.style.display = 'block';
+              
+              if (controlsDefault) controlsDefault.style.display = 'flex';
+              if (controlsConfirm) controlsConfirm.style.display = 'none';
+
+              cameraLoopActive = true;
+              window.requestAnimationFrame(loopTeachableMachine);
+              
+              shutterTop.style.transform = 'translateY(-100%)';
+              shutterBottom.style.transform = 'translateY(100%)';
+          }, 150);
+          return;
+      }
+
+      if (canvas) canvas.style.display = 'none';
+      if (video) video.style.display = 'block';
+      if (overlay) overlay.style.display = 'block';
+      
+      if (controlsDefault) controlsDefault.style.display = 'flex';
+      if (controlsConfirm) controlsConfirm.style.display = 'none';
+
+      cameraLoopActive = true;
+      window.requestAnimationFrame(loopTeachableMachine);
+    }
+
+    function concluirCaptura(e) {
+      if (e) e.stopPropagation();
       pararCamera();
       navigateTo('tela-triagem-questionario');
     }
@@ -3597,6 +3732,14 @@
         step.classList.remove('active');
       });
       const target = document.getElementById(`step-${nextStep}`);
+      if (target) target.classList.add('active');
+    }
+
+    function prevQuestion(prevStep) {
+      document.querySelectorAll('.question-step').forEach(step => {
+        step.classList.remove('active');
+      });
+      const target = document.getElementById(`step-${prevStep}`);
       if (target) target.classList.add('active');
     }
 
@@ -3909,8 +4052,11 @@
     window.saveAnswer = saveAnswer;
     window.saveCustomAnswer = saveCustomAnswer;
     window.iniciarFluxoTriagem = iniciarFluxoTriagem;
+    window.takeSnapshot = takeSnapshot;
+    window.retakeSnapshot = retakeSnapshot;
     window.concluirCaptura = concluirCaptura;
     window.nextQuestion = nextQuestion;
+    window.prevQuestion = prevQuestion;
     window.processarTudo = processarTudo;
     window.toggleSinaWindow = toggleSinaWindow;
     window.navigateTo = navigateTo;
@@ -4236,8 +4382,8 @@
           if (backBtn) {
             backBtn.style.color = articleColor;
             // Efeito hover ajustável via JS ou CSS variável
-            backBtn.onmouseover = () => backBtn.style.opacity = '0.8';
-            backBtn.onmouseout = () => backBtn.style.opacity = '1';
+            backBtn.onmouseover = () => { backBtn.style.background = `rgba(${rgbColor}, 0.1)`; backBtn.style.transform = 'translateX(-3px)'; };
+            backBtn.onmouseout = () => { backBtn.style.background = 'transparent'; backBtn.style.transform = 'translateX(0)'; };
           }
           
           // Remove old hero bg inline style and make it dynamic
