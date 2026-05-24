@@ -3942,16 +3942,41 @@
       'papelfarmaceutico': 'Farmacêuticos são seus primeiros aliados. Eles podem notar sinais e te guiar no uso correto dos protetores.'
     };
 
-    import { GoogleGenAI } from "@google/genai";
     import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const GEMINI_MODEL = "gemini-3-flash-preview";
-
+    let ai = null;
     let chatSession = null;
+    const GEMINI_MODEL = "gemini-3-flash-preview";
 
     async function initSinaChat() {
       if (chatSession) return;
+
+      let GoogleGenAI;
+      try {
+        const module = await import("@google/genai");
+        GoogleGenAI = module.GoogleGenAI;
+      } catch (err) {
+        console.warn("Could not import @google/genai locally. Trying CDN fallback...", err);
+        try {
+          const module = await import("https://esm.run/@google/genai");
+          GoogleGenAI = module.GoogleGenAI;
+        } catch (cdnErr) {
+          console.error("Failed to load Gemini SDK from both local and CDN:", cdnErr);
+        }
+      }
+
+      if (GoogleGenAI) {
+        const apiKey = (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) ? process.env.GEMINI_API_KEY : '';
+        if (apiKey) {
+          ai = new GoogleGenAI({ apiKey: apiKey });
+        } else {
+          console.warn("GEMINI_API_KEY is not defined. Sina AI chat will be unavailable.");
+        }
+      }
+
+      if (!ai) {
+        throw new Error("Sina AI (Gemini) cannot be initialized because the SDK is missing or API key is not configured.");
+      }
       
       chatSession = ai.chats.create({
         model: GEMINI_MODEL,
