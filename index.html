@@ -1483,6 +1483,30 @@
 
     /* Otimização Específica para Celular (Mobile) */
     @media (max-width: 768px) {
+      #sina-ai-feedback {
+        margin: 1rem !important;
+        padding: 1.25rem 1rem !important;
+        border-radius: 20px !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+        border-width: 2px !important;
+        position: relative;
+        z-index: 20;
+      }
+      #sina-ai-title {
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+      }
+      #sina-ai-message {
+        font-size: 1.15rem !important;
+        line-height: 1.5 !important;
+      }
+      #camera-frame-container {
+        height: 55vh !important;
+        margin: 0 1rem !important;
+        border-radius: 24px !important;
+        width: auto !important;
+      }
       header { 
         padding: 0.8rem 1rem; 
         flex-direction: row; 
@@ -3600,11 +3624,11 @@
             if (guides) guides.style.borderColor = 'var(--sina-orange)';
         } else if (bestClass.className === "Lesão Suspeita" && bestClass.probability > 0.6) {
             title.textContent = 'Atenção Necessária';
-            title.style.color = '#B45309'; // Amber/Orange warning
-            msg.innerHTML = 'Notei <strong>padrões irregulares</strong> nesta área (Regra ABCDE). Lembre-se, sou apenas uma triagem. Recomendamos agendar uma <strong>avaliação no SUS</strong> ou com seu dermatologista.';
-            box.style.background = 'rgba(245, 158, 11, 0.1)';
-            box.style.border = '1px solid rgba(245, 158, 11, 0.3)';
-            if (guides) guides.style.borderColor = '#F59E0B'; // Amber
+            title.style.color = '#dc2626'; // High contrast red for mobile visibility
+            msg.textContent = 'Notei padrões irregulares nesta área. Como sou uma inteligência artificial de apoio, recomendamos agendar uma avaliação no posto de saúde (SUS) ou com um dermatologista presencialmente.';
+            box.style.background = 'rgba(220, 38, 38, 0.1)';
+            box.style.border = '1px solid rgba(220, 38, 38, 0.3)';
+            if (guides) guides.style.borderColor = '#dc2626'; // Red
         } else {
             // "Pele Limpa / Fundo vazio" or low probability
             title.textContent = 'Sina está observando...';
