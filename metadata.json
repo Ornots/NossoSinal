@@ -1,0 +1,6 @@
+{
+  "name": "NossoSinal.ai",
+  "description": "Healthtech MVP for skin cancer triage and education, featuring local ML scanning simulation and interactive ABCDE rules.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": []
+}
