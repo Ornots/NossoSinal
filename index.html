@@ -3966,7 +3966,13 @@
       }
 
       if (GoogleGenAI) {
-        const apiKey = (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) ? process.env.GEMINI_API_KEY : '';
+        let apiKey = '';
+        try {
+          apiKey = process.env.GEMINI_API_KEY;
+        } catch (e) {
+          // Ignore if process is not defined
+        }
+        
         if (apiKey) {
           ai = new GoogleGenAI({ apiKey: apiKey });
         } else {
