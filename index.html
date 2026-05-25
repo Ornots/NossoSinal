@@ -1602,13 +1602,13 @@
     }
     /* Transições Apple-like (Premium) */
     .premium-transition {
-      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
-    .grid-exit { transform: scale(0.95); opacity: 0; }
-    .grid-enter-active { transform: scale(1); opacity: 1; }
-    .article-hidden { transform: scale(0.9) translateY(40px); opacity: 0; }
-    .article-enter-active { transform: scale(1) translateY(0); opacity: 1; }
-    .article-exit { transform: scale(0.95) translateY(0); opacity: 0; }
+    .grid-exit { transform: scale(0.92); opacity: 0; }
+    .grid-enter-active { transform: scale(1); opacity: 1; transform-origin: top center; }
+    .article-hidden { transform: scale(0.85) translateY(30px); opacity: 0; transform-origin: top center; }
+    .article-enter-active { transform: scale(1) translateY(0); opacity: 1; transform-origin: top center; }
+    .article-exit { transform: scale(0.85) translateY(30px); opacity: 0; transform-origin: top center; }
 
     button, .nav-btn, .btn, .btn-primary, .filter-pill, .encyclo-card, .bento-item, .card, .bastidores-card {
       transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -4491,8 +4491,8 @@
         articleView.classList.add('article-enter-active');
         
         // Forçar scroll to top suave da lista inteira
-        document.querySelector('main').scrollTo({top: 0, behavior: 'smooth'});
-      }, 500); // tempo para aguardar o afundamento da grade
+        document.querySelector('main').scrollTo({top: 0, behavior: 'instant'});
+      }, 300); // tempo para aguardar o afundamento da grade
     }
 
     function closeArticle() {
@@ -4519,8 +4519,8 @@
         mainView.classList.remove('grid-exit');
         mainView.classList.add('grid-enter-active');
         
-        document.querySelector('main').scrollTo({top: 0, behavior: 'smooth'});
-      }, 500);
+        document.querySelector('main').scrollTo({top: 0, behavior: 'instant'});
+      }, 300);
     }
 
     /** --- EXPOSIÇÃO GLOBAL (FINALIZE) --- */
